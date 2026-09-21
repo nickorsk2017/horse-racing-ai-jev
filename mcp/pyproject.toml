@@ -7,6 +7,7 @@ name = "jev-agent"
 version = "1.0.0"
 description = "Jev AI Agent: MCP server that serves TypeSafe Jev win probabilities, pre-race and live"
 requires-python = ">=3.10"
+license = { text = "MIT" }
 dependencies = [
     "fastmcp>=4.0,<5",
     "pydantic>=2.7,<3",

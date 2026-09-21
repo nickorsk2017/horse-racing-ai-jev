@@ -105,3 +105,7 @@ cd mcp
 .venv/bin/pip install -e ".[dev]"
 .venv/bin/python -m pytest -q
 ```
+
+## License
+
+MIT, see [LICENSE](LICENSE).
