@@ -6,40 +6,12 @@ Jev predicts live. JavaScript decides.
 
 Jev is the System One model by [TypeSafe AI](https://typesafe.ai). It is the only prediction model in the project: the agent sends it the race state and one typed question "which horse wins", Jev returns a probability per horse. Jev is asked before the start and again during the race, then both answers are compared with the result.
 
-## Structure
+## Stack
 
-```
-frontend/   browser app: React + TypeScript + Vite
-  index.html            Vite entry
-  vite.config.ts        Vite config (dev server on 5173)
-  tsconfig.json         TypeScript config (strict)
-  Dockerfile            build with Node, serve dist/ with nginx
-  src/main.tsx          React root
-  src/App.tsx           header, tabs, shared Jev agent status
-  src/types.ts          domain types: race, simulation, briefing, snapshot, prediction
-  src/lib/engine.ts     race simulation, the only source of results; also builds the live snapshot (what a spectator sees)
-  src/lib/jev.ts        MCP client of the Jev AI Agent
-  src/lib/render.ts     canvas renderer
-  src/lib/format.ts     formatting and scoring helpers
-  src/hooks/useRace.ts  race flow: generate, Jev pre-race, animation, Jev live, result
-  src/hooks/useAgent.ts Jev agent status (chip, error box)
-  src/components/       RaceView, EventsPanel, HorseRows, WhyModal (factor breakdown popup), LiveChart, RaceResult, ModelLab
-  src/style.css         styles
-mcp/        Jev AI Agent: Python + FastMCP + Pydantic
-  jev_agent/
-    config.py       settings (pydantic-settings, JEV_* env vars, .env)
-    main.py         ASGI app, CORS, uvicorn entry point
-    server.py       FastMCP server: tools and /health
-    schemas/        Pydantic schemas: briefing (input), prediction, health (output)
-    schemas/live.py live snapshot and RaceQuery (briefing plus optional snapshot)
-    providers/      jev.py: TypeSafe Jev client, state.py: Jev state from a query
-    tools/          MCP tools predict_race and predict_races
-    prompts/        server instructions and the Jev winner question
-  tests/          provider (fake TypeSafe API), schemas, settings, MCP tools
-  pyproject.toml  package and dependencies
-  .env.example    settings template
-  Dockerfile      container image
-```
+- **Frontend** (`frontend/`): React, TypeScript, Vite, Canvas, nginx
+- **Jev AI Agent** (`mcp/`): Python, FastMCP, Pydantic, uvicorn, TypeSafe SDK
+- **Tests**: pytest
+- **Run**: Docker Compose
 
 ## Flow
 
@@ -54,44 +26,31 @@ The Model Lab asks Jev twice per race: at the start and live when the leader has
 
 ## Run
 
-Set the TypeSafe API key first (early access, console.typesafe.ai):
+Requirements: Docker with Docker Compose, make.
+
+1. Check that Docker is running:
+
+```
+docker info
+```
+
+2. Set the TypeSafe API key (early access, console.typesafe.ai):
 
 ```
 cp mcp/.env.example mcp/.env
 ```
 
-Then put the key into `TYPESAFE_API_KEY=` in `mcp/.env`. Without the key the agent starts, `/health` returns `"configured": false` and the tools return an error.
+Put the key into `TYPESAFE_API_KEY=` in `mcp/.env`. Without the key the agent starts, `/health` returns `"configured": false` and the tools return an error.
 
-AI Agent (MCP endpoint `http://127.0.0.1:8765/mcp`, health check `/health`):
-
-```
-cd mcp
-./run.sh
-```
-
-`run.sh` creates `.venv`, installs the package and creates `.env` from `.env.example` if it is missing.
-
-Frontend (in a second terminal, Node.js 20.19+ or 22.12+):
+3. Start the stack:
 
 ```
-cd frontend
-npm install
-npm run dev
+make up
 ```
 
-Open http://localhost:5173.
+The frontend runs on port 3000 or the next free port, the URL is printed after start. AI Agent: `http://127.0.0.1:8765/mcp`, health check `/health`. Another start port: `make up DOCKER_FRONTEND_PORT=4000`.
 
-Type check: `npm run typecheck`. Production build: `npm run build` (type check, then Vite) writes `frontend/dist`, `npm run preview` serves it on port 5173.
-
-Docker:
-
-```
-cd mcp
-docker build -t jev-agent .
-docker run --rm -p 8765:8765 --env-file .env -e JEV_HOST=0.0.0.0 jev-agent
-```
-
-Makefile: `make run` (agent + frontend), `make frontend` (Vite dev server), `make frontend-build`, `make test`, `make up` (Docker Compose: frontend on port 3000, if it is busy then the next free port; the URL is printed after start; a different start port: `make up DOCKER_FRONTEND_PORT=4000`), `make docker-test` (tests in the `test` stage of the Dockerfile).
+Other commands: `make down` (stop), `make restart`, `make logs`, `make ps`, `make docker-test` (tests in Docker).
 
 ## MCP tools
 
