@@ -1,5 +1,7 @@
 # Horse Racing AI
 
+Horse racing simulator with real-time AI prediction. The TypeSafe Jev model is used to predict race changes in under a second.
+
 Jev predicts live. JavaScript decides.
 
 Jev is the System One model by [TypeSafe AI](https://typesafe.ai). It is the only prediction model in the project: the agent sends it the race state and one typed question "which horse wins", Jev returns a probability per horse. Jev is asked before the start and again during the race, then both answers are compared with the result.
@@ -89,7 +91,7 @@ docker build -t jev-agent .
 docker run --rm -p 8765:8765 --env-file .env -e JEV_HOST=0.0.0.0 jev-agent
 ```
 
-Makefile: `make run` (agent + frontend), `make frontend` (Vite dev server), `make frontend-build`, `make test`, `make up` (Docker Compose), `make docker-test` (tests in the `test` stage of the Dockerfile).
+Makefile: `make run` (agent + frontend), `make frontend` (Vite dev server), `make frontend-build`, `make test`, `make up` (Docker Compose: frontend on port 3000, if it is busy then the next free port; the URL is printed after start; a different start port: `make up DOCKER_FRONTEND_PORT=4000`), `make docker-test` (tests in the `test` stage of the Dockerfile).
 
 ## MCP tools
 

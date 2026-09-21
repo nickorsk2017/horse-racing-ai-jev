@@ -10,7 +10,7 @@ services:
     environment:
       JEV_HOST: 0.0.0.0
       JEV_PORT: "8765"
-      JEV_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      JEV_ALLOWED_ORIGINS: http://localhost:${FRONTEND_PORT:-3000},http://127.0.0.1:${FRONTEND_PORT:-3000}
     ports:
       - "127.0.0.1:8765:8765"
     healthcheck:
@@ -28,7 +28,7 @@ services:
         VITE_JEV_AGENT_URL: http://127.0.0.1:8765/mcp
     image: horse-racing-frontend
     ports:
-      - "127.0.0.1:5173:80"
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:80"
     depends_on:
       mcp:
         condition: service_healthy

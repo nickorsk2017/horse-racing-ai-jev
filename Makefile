@@ -2,6 +2,9 @@ PYTHON ?= python3
 COMPOSE ?= docker compose
 VENV := mcp/.venv
 FRONTEND_PORT := 5173
+DOCKER_FRONTEND_PORT ?= 3000
+
+free_port = $(PYTHON) -c "import socket; print(next(p for p in range($(1), 65536) if socket.socket().connect_ex(('127.0.0.1', p))))"
 
 .DEFAULT_GOAL := help
 .PHONY: help install run mcp frontend test clean up down restart logs ps build docker-test
@@ -39,10 +42,12 @@ clean: ## Remove venv and caches
 build: ## Build Docker images
 	$(COMPOSE) build
 
-up: ## Run the whole stack in Docker (background)
-	$(COMPOSE) up -d --build
-	@echo "Frontend: http://localhost:$(FRONTEND_PORT)"
-	@echo "AI Agent: http://127.0.0.1:8765/mcp"
+up: ## Run the whole stack in Docker (background), frontend on port 3000 or the next free one
+	@port=$$($(COMPOSE) port frontend 80 2>/dev/null | sed 's/.*://'); \
+	[ -n "$$port" ] || port=$$($(call free_port,$(DOCKER_FRONTEND_PORT))); \
+	FRONTEND_PORT=$$port $(COMPOSE) up -d --build && \
+	echo "Frontend: http://localhost:$$port" && \
+	echo "AI Agent: http://127.0.0.1:8765/mcp"
 
 down: ## Stop Docker stack
 	$(COMPOSE) down
