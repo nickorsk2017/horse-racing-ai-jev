@@ -1,0 +1,35 @@
+name: horse-racing
+
+services:
+  mcp:
+    build: ./mcp
+    image: horse-racing-mcp
+    env_file:
+      - path: ./mcp/.env
+        required: false
+    environment:
+      JEV_HOST: 0.0.0.0
+      JEV_PORT: "8765"
+      JEV_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+    ports:
+      - "127.0.0.1:8765:8765"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_JEV_AGENT_URL: http://127.0.0.1:8765/mcp
+    image: horse-racing-frontend
+    ports:
+      - "127.0.0.1:5173:80"
+    depends_on:
+      mcp:
+        condition: service_healthy
+    restart: unless-stopped
