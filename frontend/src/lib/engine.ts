@@ -126,7 +126,7 @@ function effective(h: Horse, weather: WeatherId): { S: number; St: number } {
   return { S, St };
 }
 
-function simulate(race: Race, noiseSeed: number, record: boolean, dt: number): Sim {
+function simulate(race: Race, noiseSeed: number, record: boolean, dt: number, demoFall?: { i: number; at: number }): Sim {
   const r = rng(noiseSeed);
   const D = race.distance;
   const wid = race.weather.id;
@@ -167,7 +167,7 @@ function simulate(race: Race, noiseSeed: number, record: boolean, dt: number): S
       if (h.burst > 0) { h.burst -= dt; mult *= CFG.EV.BURST_F; }
       const v = base * h.pace * fatigue * h.form * mult * (1 + (r() - 0.5) * 0.02);
       const dist = v * dt;
-      if (p > 0.05 && r() < dist * CFG.EV.FALL_RATE * h.risk) {
+      if ((demoFall && demoFall.i === i && p >= demoFall.at) || (p > 0.05 && r() < dist * CFG.EV.FALL_RATE * h.risk)) {
         h.time = Infinity; left--; events.push({ i, type: "fall", t });
         return;
       }
@@ -188,11 +188,21 @@ function simulate(race: Race, noiseSeed: number, record: boolean, dt: number): S
 export function _tune(patch: Partial<EngineConfig>): void { Object.assign(CFG, patch); }
 // ---------- end hidden part ----------
 
+// TEMPORARY (video demo): the Math favourite falls in DEMO_FAV_FALL of races. Set to 0 to disable.
+const DEMO_FAV_FALL = 0.3;
+function demoFall(race: Race): { i: number; at: number } | undefined {
+  if (DEMO_FAV_FALL <= 0) return undefined;
+  const r = rng(mix(race.seed, 0xfa11));
+  if (r() >= DEMO_FAV_FALL) return undefined;
+  const probs = mathProbabilities(race, 100);
+  const i = probs.indexOf(Math.max(...probs));
+  return { i, at: 0.3 + r() * 0.45 };
+}
 export function runRace(race: Race): Sim {
-  return simulate(race, mix(race.seed, 0xabc), true, 0.1);
+  return simulate(race, mix(race.seed, 0xabc), true, 0.1, demoFall(race));
 }
 export function actualWinner(race: Race): number {
-  return simulate(race, mix(race.seed, 0xabc), false, 0.1).winner;
+  return simulate(race, mix(race.seed, 0xabc), false, 0.1, demoFall(race)).winner;
 }
 export function mathPlaces(race: Race, n = 300): number[][] {
   const cnt = race.horses.map(() => [0, 0, 0, 0]);

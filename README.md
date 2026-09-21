@@ -4,6 +4,8 @@ Horse racing simulator with real-time AI prediction. The TypeSafe Jev model is u
 
 Jev predicts live. JavaScript decides.
 
+![Horse Racing AI](docs/screenshot.png)
+
 Jev is the System One model by [TypeSafe AI](https://typesafe.ai). It is the only prediction model in the project: the agent sends it the race state and one typed question "which horse wins", Jev returns a probability per horse. Jev is asked before the start and again during the race, then both answers are compared with the result.
 
 ## Stack
